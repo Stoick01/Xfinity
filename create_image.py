@@ -49,7 +49,7 @@ class ImageCreator():
             max_h = max(im1.height, im2.height)
             diff = abs(im1.height - im2.height)
 
-            cnt = Image.new('RGB', (im1.width + im2.width, max_h), color='white')
+            cnt = Image.new('RGBA', (im1.width + im2.width, max_h), color=(255, 255, 255, 0))
             if im1.height > im2.height:
                 cnt.paste(im1, (0, 0))
                 cnt.paste(im2, (im1.width, diff))

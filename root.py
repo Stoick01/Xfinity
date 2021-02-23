@@ -4,7 +4,7 @@ import numpy as np
 import random
 from datetime import datetime
 import time
-from rando import get_random_image
+from rando import get_random_image, convert_to_transparent
 
 class Root():
     def __init__(self, img):
@@ -21,13 +21,13 @@ class Root():
             a = np.array(self.img)[:, -k]
 
             found = False
-            cnt = len(np.where((a == (0, 0, 0)).all(axis=1))[0])
+            cnt = len(np.where((a == (0, 0, 0, 255)).all(axis=1))[0])
             if cnt != 2:
                 continue
 
             b = np.array(self.img)[:, -(k+1)]
-            a_s = np.where((a == (0, 0, 0)).all(axis=1))[0].sum()
-            b_s = np.where((b == (0, 0, 0)).all(axis=1))[0].sum()
+            a_s = np.where((a == (0, 0, 0, 255)).all(axis=1))[0].sum()
+            b_s = np.where((b == (0, 0, 0, 255)).all(axis=1))[0].sum()
 
             if abs(a_s- b_s) > 4:
                 continue
@@ -48,7 +48,7 @@ class Root():
         self.find_tail()
 
         width = size[0] + 10
-        full = Image.new('RGB', (width, 36), color="white")
+        full = Image.new('RGBA', (width, 36), color=(255, 255, 255, 0))
         offset_y = 4
         base = 4
         offs = [-1, 0, 1]
@@ -57,6 +57,9 @@ class Root():
         # Create root image
         full.paste(self.img, (0, 4))
         o = 0
+        im = Image.fromarray(self.arr)
+        im = convert_to_transparent(im)
+
         for i in range(width - 32 + self.offset):
             if cnt == 0:
                 o = random.choice(offs)
@@ -66,7 +69,6 @@ class Root():
                 offset_y += o
                 cnt = 25
             cnt -= 1
-            im = Image.fromarray(self.arr)
             full.paste(im, (32 + i - self.offset, offset_y))
 
         # resize root and get its bbox
@@ -98,17 +100,20 @@ class Root():
 
         # find start index
         for i in range(len(img)):
-            if not img[i].all():
+            # if (img[i] == [0, 0, 0, 255]).any():
+            if any(np.equal(img[i], [0, 0, 0, 255]).all(1)):
                 y_start += i
                 break
 
         # find end index
         for i in reversed(range(len(img))):
-            if not img[i].all():
+            # if (img[i] == [0, 0, 0, 255]).any():
+            if any(np.equal(img[i], [0, 0, 0, 255]).all(1)):
                 y_end += i
                 break
 
         self.offset_y = y_start
+        print(y_start, y_end)
 
         # put all together
         bbox = [
@@ -159,9 +164,9 @@ class Root():
         
         # concat root and formula under it
         max_h = max(im.height, self.root.height)
-        cnt = Image.new('RGB', (self.root.width, max_h), color='white')
+        cnt = Image.new('RGBA', (self.root.width, max_h), color=(255, 255, 255, 0))
         cnt.paste(self.root, (0, 0))
-        cnt.paste(im, (32-self.offset-15, self.offset_y+5)), im
+        cnt.paste(im, (32-self.offset-15, self.offset_y+5), im)
 
         bbox = self.shift_formula(bbox)
 
