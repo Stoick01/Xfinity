@@ -30,18 +30,50 @@ class ImageCreator():
                         row[2] = row[2][:-1]
                 self.d[row[2]].append(self.root + row[0])
 
-    def concat_images(self, im1, im2, d='h'):
+    def move_bbox(self, bbox, x=0, y=0):
+        """
+        Shift part of formula, only bboxes
+
+        Args:
+            bbox (list): bbox to be shifted
+            x (int): x offset
+            y (int): y offset
+
+        Returns:
+            bbox: shifted bbox
+        """
+
+        new_bb = []
+
+        for bb in bbox:
+            e = bb['el']
+            b = []
+            for d in bb['bbox']:
+                new_x = d[0] + x
+                new_y = d[1] + y
+                b.append((new_x, new_y))
+
+            new_bb.append({
+                'el': e,
+                'bbox': b
+            })
+
+        return new_bb
+
+    def concat_images(self, im1, im2, bb1, bb2, d='h'):
         """
         Concatenate two images, horizontaly or verticaly, if its verticaly, images are centered
 
         Args:
             im1 (Image): fist image
             im2 (Image): second image
+            bb1 (list): bbox of first image
+            bb2 (list): bbox of second image
             d (string): direction of concatenation, h-horizontal, v-vertical
                 Defaults to 'h'
 
         Returns:
-            Image: concatenated image.
+            Image, bbox: concatenated image.
         """
 
         # concat images horizontaly
@@ -53,13 +85,17 @@ class ImageCreator():
             if im1.height > im2.height:
                 cnt.paste(im1, (0, 0))
                 cnt.paste(im2, (im1.width, diff))
+                bb2 = self.move_bbox(bb2, y=diff)
             else:
                 cnt.paste(im1, (0, diff))
                 cnt.paste(im2, (im1.width, 0))
-            return cnt
+                bb1 = self.move_bbox(bb1, y=diff)
+
+            bb1 += bb2
+            return cnt, bb1
 
 
-        return None
+        return None, None
     
     ## BBOX (BOTTOM LEFT, BOTTOM RIGHT, TOP RIGHT, TOP LEFT)
     def bbox_of_image(self, prev, image):
@@ -147,7 +183,7 @@ class ImageCreator():
         # initialize image
         parts = []
         parts.append({"bbox": start, "el": "START/000"})
-        image = Image.new('RGB', (0, 0), color='white')
+        image = Image.new('RGBA', (0, start[2][1]), color='white')
 
         formula = self.parse_formula(formula)
 
@@ -171,18 +207,16 @@ class ImageCreator():
                 size = self.get_dist(bb)
                 root.create_root(size, parts[-1]['bbox'])
                 img, bb = root.insert_image(ur, bb)
-                image = self.concat_images(image, img)
-
-                parts += bb
+                image, parts = self.concat_images(image, img, parts, bb)
             else:
                 # get new element and add its bbox
                 new_image = get_random_image(formula[i], self.d)
                 bbox = self.bbox_of_image(parts[-1]['bbox'], new_image)
-                parts.append({
+                bb = [{
                     "bbox": bbox,
                     "el": formula[i]
-                })
-                image = self.concat_images(image, new_image)
+                }]
+                image, parts = self.concat_images(image, new_image, parts, bb)
                 i += 1
         
         return image, parts
@@ -192,3 +226,4 @@ if __name__ == '__main__':
     creator = ImageCreator()
     img, p = creator.create_image("2288-5-(6+8)-\\sqrt{2+3}")
     img.show()
+    print(p)

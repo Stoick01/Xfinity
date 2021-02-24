@@ -100,20 +100,17 @@ class Root():
 
         # find start index
         for i in range(len(img)):
-            # if (img[i] == [0, 0, 0, 255]).any():
             if any(np.equal(img[i], [0, 0, 0, 255]).all(1)):
                 y_start += i
                 break
 
         # find end index
         for i in reversed(range(len(img))):
-            # if (img[i] == [0, 0, 0, 255]).any():
             if any(np.equal(img[i], [0, 0, 0, 255]).all(1)):
                 y_end += i
                 break
 
         self.offset_y = y_start
-        print(y_start, y_end)
 
         # put all together
         bbox = [
