@@ -134,14 +134,32 @@ class Root():
         Returns:
             list: bbox shifted for under root
         """
+
+        x = 32-self.offset-15
+        y = self.offset_y+5
+
+        new_bb = []
+
+        for bb in bbox:
+            e = bb['el']
+            b = []
+            for d in bb['bbox']:
+                new_x = d[0] + x
+                new_y = d[1] + y
+                b.append((new_x, new_y))
+
+            new_bb.append({
+                'el': e,
+                'bbox': b
+            })
         
         # add roots bbox
-        bbox += [{
+        new_bb += [{
             'bbox': self.bbox,
             'el': '\\sqrt{'
         }]
 
-        return bbox
+        return new_bb
 
     def insert_image(self, im, bbox):
         """
