@@ -47,7 +47,7 @@ class Root():
         """
         self.find_tail()
 
-        width = size[0] + 10
+        width = size[0]
         full = Image.new('RGBA', (width, 36), color=(255, 255, 255, 0))
         offset_y = 4
         base = 4
@@ -72,7 +72,7 @@ class Root():
             full.paste(im, (32 + i - self.offset, offset_y))
 
         # resize root and get its bbox
-        full = full.resize((size[0]+10, size[1]+10), Image.ANTIALIAS)
+        full = full.resize((size[0], size[1]), Image.ANTIALIAS)
         dims = self.get_bbox(full, start[1])
         self.bbox = dims
         self.root = full
@@ -93,7 +93,7 @@ class Root():
         x_start = 0 + start[0]
         x_end = image.size[0] + start[0]
 
-        y_start = start[1]
+        y_start = 0
         y_end = start[1]
 
         img = np.array(image)

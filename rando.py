@@ -48,4 +48,7 @@ def get_random_image(key, d):
         image = random.choice(images)
         image = Image.open(image)
 
+    if key in ['+', '-', '/', '*']:
+        image = image.resize((20, 20))
+
     return convert_to_transparent(image)

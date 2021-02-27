@@ -5,6 +5,7 @@ import random
 
 from rando import get_random_image
 from root import Root
+from fraction import Fraction
 
 
 class ImageCreator():
@@ -60,7 +61,7 @@ class ImageCreator():
 
         return new_bb
 
-    def concat_images(self, im1, im2, bb1, bb2, d='h'):
+    def concat_images(self, im1, im2, bb1, bb2, d='h', center_v=False):
         """
         Concatenate two images, horizontaly or verticaly, if its verticaly, images are centered
 
@@ -71,6 +72,7 @@ class ImageCreator():
             bb2 (list): bbox of second image
             d (string): direction of concatenation, h-horizontal, v-vertical
                 Defaults to 'h'
+            center_v (bool): declares if image should be ceneterd vertically instead shifted
 
         Returns:
             Image, bbox: concatenated image.
@@ -81,15 +83,29 @@ class ImageCreator():
             max_h = max(im1.height, im2.height)
             diff = abs(im1.height - im2.height)
 
-            cnt = Image.new('RGBA', (im1.width + im2.width, max_h), color=(255, 255, 255, 0))
+            x_shift = random.randint(1, 5)
+
+            cnt = Image.new('RGBA', (im1.width + im2.width + x_shift, max_h), color=(255, 255, 255, 0))
             if im1.height > im2.height:
-                cnt.paste(im1, (0, 0))
-                cnt.paste(im2, (im1.width, diff))
-                bb2 = self.move_bbox(bb2, y=diff)
+                if not center_v:
+                    cnt.paste(im1, (0, 0))
+                    cnt.paste(im2, (im1.width + x_shift, diff))
+                    bb2 = self.move_bbox(bb2, y=diff)
+                else:
+                    cnt.paste(im1, (0, 0))
+                    cnt.paste(im2, (im1.width + x_shift, diff // 2))
+                    bb2 = self.move_bbox(bb2, y=diff // 2)
             else:
-                cnt.paste(im1, (0, diff))
-                cnt.paste(im2, (im1.width, 0))
-                bb1 = self.move_bbox(bb1, y=diff)
+                if not center_v:
+                    cnt.paste(im1, (0, diff))
+                    cnt.paste(im2, (im1.width + x_shift, 0))
+                    bb1 = self.move_bbox(bb1, y=diff)
+                else:
+                    cnt.paste(im1, (0, diff // 2))
+                    cnt.paste(im2, (im1.width + x_shift, 0))
+                    bb1 = self.move_bbox(bb1, y=diff // 2)
+
+            bb2 = self.move_bbox(bb2, x=x_shift)
 
             bb1 += bb2
             return cnt, bb1
@@ -115,10 +131,10 @@ class ImageCreator():
         dims = image.size
 
         bbox = [
-            (start),
-            (start[0] + dims[0], start[1]),
-            (start[0] + dims[0], start[1] + dims[1]),
-            (start[0], start[1] + dims[1])
+            (start[0], 0),
+            (start[0] + dims[0], 0),
+            (start[0] + dims[0], dims[1]),
+            (start[0], dims[1])
         ]
 
         return bbox
@@ -141,7 +157,7 @@ class ImageCreator():
 
         for e in formula:
             s += e
-            if s in self.d.keys() or s in ['}', '(', ')']:
+            if s in self.d.keys() or s in ['{', '}', '(', ')'] or s == '\\frac{':
                 f.append(s)
                 s = ''
 
@@ -154,7 +170,6 @@ class ImageCreator():
         Args:
             bb: bboxes of all elements under the root
         """
-
         # get max height
         m = 0
         for el in bb:
@@ -162,11 +177,43 @@ class ImageCreator():
             if e > m:
                 m = e
 
+        # x_min = bb[0]['bbox'][-1][0]
+        # x_max = bb[-1]['bbox'][-1]
+
         # get length
         first = bb[0]['bbox'][-1]
-        last = bb[-1]['bbox'][-1]
+        last = bb[-1]['bbox'][2]
         dif = last[0] - first[0]
         return (dif, m)
+
+    def get_formula_part(self, formula, idx):
+        """
+        Function to get part of the formula within the {}, for example under the root, or in fraction
+
+        Args:
+            formula: formula we are parsing
+            idx: start index
+
+        Returns:
+            Tuple (string, int): returns formula and end index
+        """
+
+        # init part of formula, and get 
+        part = ''
+        opened = 1
+
+        while True:
+            if formula[idx] == '}':
+                opened -= 1
+            elif '{' in formula[idx]:
+                opened += 1
+            if opened == 0:
+                idx += 1
+                break
+            part += formula[idx]
+            idx += 1
+
+        return part, idx
 
     def create_image(self, formula, start=[(0, 0), (0, 0), (0, 0), (0, 0)]):
         """
@@ -193,13 +240,11 @@ class ImageCreator():
                 # create root
                 r = get_random_image(formula[i], self.d)
                 root = Root(r)
-                under = ''
-                i += 1
+                
                 # get formula under the root
-                while formula[i] != '}':
-                    under += formula[i]
-                    i += 1
                 i += 1
+                under, i = self.get_formula_part(formula, i)
+
                 # Get image under the root
                 ur, bb = self.create_image(under, parts[-1]['bbox'])
 
@@ -208,6 +253,31 @@ class ImageCreator():
                 root.create_root(size, parts[-1]['bbox'])
                 img, bb = root.insert_image(ur, bb)
                 image, parts = self.concat_images(image, img, parts, bb)
+            elif formula[i] == '\\frac{':
+                # get numerator
+                i += 1
+                numer, i = self.get_formula_part(formula, i)
+
+                numer_img, numer_bb = self.create_image(numer, parts[-1]['bbox'])
+
+                # get denuminator
+                i += 1
+                denum, i = self.get_formula_part(formula, i)
+
+                denum_img, denum_bb = self.create_image(denum, parts[-1]['bbox'])
+
+                # create fraction
+                size_numer = self.get_dist(numer_bb)
+                size_denum = self.get_dist(denum_bb)
+
+                size = max(size_numer, size_denum)
+
+                fraction = Fraction()
+
+                fraction.create_fraction(size, parts[-1]['bbox'])
+                img, bb = fraction.insert_num_denum(numer_img, denum_img, numer_bb, denum_bb)
+
+                image, parts = self.concat_images(image, img, parts, bb, center_v=True)
             else:
                 # get new element and add its bbox
                 new_image = get_random_image(formula[i], self.d)
@@ -216,7 +286,10 @@ class ImageCreator():
                     "bbox": bbox,
                     "el": formula[i]
                 }]
-                image, parts = self.concat_images(image, new_image, parts, bb)
+                c_v = False
+                if formula[i] in ['+', '-', '*', '/']:
+                    c_v = True
+                image, parts = self.concat_images(image, new_image, parts, bb, center_v=c_v)
                 i += 1
         
         return image, parts
@@ -224,6 +297,6 @@ class ImageCreator():
 
 if __name__ == '__main__':
     creator = ImageCreator()
-    img, p = creator.create_image("2288-5-(6+8)-\\sqrt{2+3}")
+    img, p = creator.create_image("2288-5-(6+8)-\\sqrt{2+\\sqrt{3+4}}")
     img.show()
     print(p)
