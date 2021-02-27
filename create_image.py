@@ -230,7 +230,7 @@ class ImageCreator():
         # initialize image
         parts = []
         parts.append({"bbox": start, "el": "START/000"})
-        image = Image.new('RGBA', (0, start[2][1]), color='white')
+        image = Image.new('RGBA', (0, start[2][1]), color=(255, 255, 255, 0))
 
         formula = self.parse_formula(formula)
 
@@ -291,8 +291,74 @@ class ImageCreator():
                     c_v = True
                 image, parts = self.concat_images(image, new_image, parts, bb, center_v=c_v)
                 i += 1
-        
+
         return image, parts
+
+    def generate(self, formula, background_color=None, padding=True):
+        """
+        Generate image with background
+
+        Args:
+            formula: latex formula
+            background_color: background color
+            padding: if true add padding to image
+
+        Returns:
+            Tuple: image, bbox
+        """
+
+        image, bbox = self.create_image(formula)
+
+        if padding:
+            image, bbox = self.add_padding(image, bbox)
+
+        image = self.fill_background(image, background_color)
+
+        return image, bbox
+
+    def add_padding(self, image, bbox):
+        """
+        Add random padding to all the sides of the image
+
+        Args:
+            image: pil rgba image
+            bbox: bbox off the image
+
+        Returns:
+            Tuple (image, bbox): 
+        """
+
+        offset_x = random.randint(0, 64)
+        offset_y = random.randint(0, 32)
+
+        new_image = Image.new('RGBA', (image.width + 64, image.height + 32), color=(255, 255, 255, 0))
+        new_image.paste(image, (offset_x, offset_y))
+
+        bbox = self.move_bbox(bbox, x=offset_x, y=offset_y)
+
+        return new_image, bbox
+
+
+    def fill_background(self, img, color=None):
+        """
+        Fill background of rgba image, and convert it to rgb
+
+        Args:
+            image: rgba image
+            color: backcolor is set to random shade of white (gray) if no color is provided
+
+        Returns:
+            Image: PIL image object
+        """
+
+        if color == None:
+            colors = ['#fff', '#eee', '#ddd', '#ccc', '#bbb', '#aaa', '#999', '#888']
+            color = random.choice(colors)
+
+        back = Image.new('RGB', img.size, color)
+        back.paste(img, mask=img.split()[3])
+
+        return back
 
 
 if __name__ == '__main__':
