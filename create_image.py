@@ -9,6 +9,10 @@ from fraction import Fraction
 
 
 class ImageCreator():
+    """
+    Creates single image and bbox
+    """
+
     def __init__(self):
         self.root = 'hasyv2/'
 
