@@ -25,7 +25,7 @@ if __name__ == '__main__':
     color = None
     size = 1
     formulas = []
-    destination = '.'
+    path = 'dataset'
 
     if sys.argv[idx] == '--help':
         print('')
@@ -39,7 +39,7 @@ if __name__ == '__main__':
             ['--dims <width>x<height>', 'Generate images with specified width and height (ex. 260x48)'],
             ['--color <color>', 'Sets background color, same for all the images, note color must be hex number'],
             ['--size <size>', 'Defines number of train images created for each formula provided'],
-            ['--dest <path>', 'Path where you want to save the dataset to'],
+            ['--path <path>', 'Path where you want to save the dataset to'],
             ['--formula [formulas]', 'Provide list of formulas you want to create datasets from'],
         ]
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
         size = sys.argv[idx]
         idx += 1
 
-    if idx < len(sys.argv) and sys.argv[idx] == '--dest':
+    if idx < len(sys.argv) and sys.argv[idx] == '--path':
         idx += 1
         if idx >= len(sys.argv):
             print('Path is not provided')
@@ -120,5 +120,5 @@ if __name__ == '__main__':
             idx += 1
 
 
-    dataset = Dataset(dims, color, size, dest, formulas)
+    dataset = Dataset(dims, color, size, path, formulas)
     dataset.generate()
