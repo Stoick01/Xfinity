@@ -37,10 +37,10 @@ if __name__ == '__main__':
         options = [
             ['--help', 'Show help'],
             ['--dims <width>x<height>', 'Generate images with specified width and height (ex. 260x48)'],
-            ['--color <color>', 'Sets background color, same for all the images, note color must be hex number'],
-            ['--size <size>', 'Defines number of train images created for each formula provided'],
-            ['--path <path>', 'Path where you want to save the dataset to'],
-            ['--formula [formulas]', 'Provide list of formulas you want to create datasets from'],
+            ['--color <color>', 'Sets background color, same for all the images, note color must be a hex number'],
+            ['--size <size>', 'Defines the number of train images created for each formula provided'],
+            ['--path <path>', 'The path where you want to save the dataset to'],
+            ['--formula [formulas]', 'Provide a list of formulas you want to create datasets from'],
         ]
 
         for o in options:

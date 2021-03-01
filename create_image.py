@@ -283,7 +283,7 @@ class ImageCreator():
                     "el": formula[i]
                 }]
                 c_v = False
-                if formula[i] in ['+', '-', '*', '/']:
+                if formula[i] in ['+', '-', '/', '\\cdot']:
                     c_v = True
                 image, parts = self.concat_images(image, new_image, parts, bb, center_v=c_v)
                 i += 1
