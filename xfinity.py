@@ -95,7 +95,7 @@ if __name__ == '__main__':
             print('Size in the argument --size is not a number.')
             exit()
 
-        size = sys.argv[idx]
+        size = int(sys.argv[idx])
         idx += 1
 
     if idx < len(sys.argv) and sys.argv[idx] == '--path':

@@ -16,7 +16,7 @@ def convert_to_transparent(image):
 
     x = np.asarray(image.convert('RGBA')).copy()
 
-    x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
+    x[:, :, 3] = (255 - x[:, :, :3].mean(axis=2)).astype(np.uint8)
 
     return Image.fromarray(x)
 

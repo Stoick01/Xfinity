@@ -4,6 +4,7 @@ import shutil
 from PIL import Image
 
 from create_image import ImageCreator
+from bbox import BboxCreator
 
 class Dataset():
     """
@@ -54,7 +55,11 @@ class Dataset():
                 filename = str(i) + '.jpg'
 
                 image.save(os.path.join(loc, filename), 'JPEG')
-                print(f'Train {formula}, {i+1:>{len(str(self.train_size))}}/{self.train_size}')
+                print(f'Train {formula}, {i+1:>{len(str(self.train_size))}}/{self.train_size}', end='\r')
+
+                bb_creator = BboxCreator(formula, filename)
+                bb_creator.create_file(loc, bbox)
+            print('')
 
 
             # create train images
@@ -66,4 +71,8 @@ class Dataset():
                 filename = str(i) + '.jpg'
 
                 image.save(os.path.join(loc, filename), 'JPEG')
-                print(f'Test {formula}, {i+1:>{len(str(self.test_size))}}/{self.test_size}')
+                print(f'Test {formula}, {i+1:>{len(str(self.test_size))}}/{self.test_size}', end='\r')
+
+                bb_creator = BboxCreator(formula, filename)
+                bb_creator.create_file(loc, bbox)
+            print('')
