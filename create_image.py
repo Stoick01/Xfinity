@@ -15,6 +15,7 @@ class ImageCreator():
 
     def __init__(self):
         self.root = 'hasyv2/'
+        self.root_ind = 1
 
         self.d = dict()
         # load keys
@@ -91,23 +92,13 @@ class ImageCreator():
 
             cnt = Image.new('RGBA', (im1.width + im2.width + x_shift, max_h), color=(255, 255, 255, 0))
             if im1.height > im2.height:
-                if not center_v:
-                    cnt.paste(im1, (0, 0))
-                    cnt.paste(im2, (im1.width + x_shift, diff))
-                    bb2 = self.move_bbox(bb2, y=diff)
-                else:
-                    cnt.paste(im1, (0, 0))
-                    cnt.paste(im2, (im1.width + x_shift, diff // 2))
-                    bb2 = self.move_bbox(bb2, y=diff // 2)
+                cnt.paste(im1, (0, 0))
+                cnt.paste(im2, (im1.width + x_shift, diff // 2))
+                bb2 = self.move_bbox(bb2, y=diff // 2)
             else:
-                if not center_v:
-                    cnt.paste(im1, (0, diff))
-                    cnt.paste(im2, (im1.width + x_shift, 0))
-                    bb1 = self.move_bbox(bb1, y=diff)
-                else:
-                    cnt.paste(im1, (0, diff // 2))
-                    cnt.paste(im2, (im1.width + x_shift, 0))
-                    bb1 = self.move_bbox(bb1, y=diff // 2)
+                cnt.paste(im1, (0, diff // 2))
+                cnt.paste(im2, (im1.width + x_shift, 0))
+                bb1 = self.move_bbox(bb1, y=diff // 2)
 
             bb2 = self.move_bbox(bb2, x=x_shift)
 
@@ -255,7 +246,8 @@ class ImageCreator():
                 # put root and image together
                 size = self.get_dist(bb)
                 root.create_root(size, parts[-1]['bbox'])
-                img, bb = root.insert_image(ur, bb)
+                img, bb = root.insert_image(ur, bb, self.root_ind)
+                self.root_ind += 1
                 image, parts = self.concat_images(image, img, parts, bb)
             elif formula[i] == '\\frac{':
                 # get numerator

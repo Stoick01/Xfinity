@@ -26,10 +26,10 @@ class Fraction():
         start = start[2]
 
         bbox = [
-            (start[0], 32),
-            (start[0] + width, 32),
-            (start[0] + width, 32+ height),
-            (start[0], 32 + height)
+            (start[0], 0),
+            (start[0] + width, 0),
+            (start[0] + width, height),
+            (start[0], height)
         ]
 
         return bbox
@@ -81,7 +81,7 @@ class Fraction():
 
         return full, self.bbox
 
-    def shift_formula(self, numer_bb, denum_bb, numer_offset, denum_offset):
+    def shift_formula(self, numer_bb, denum_bb, numer_offset, denum_offset, self_offset):
         """
         Shifts bboxes to fit the fraction
 
@@ -123,12 +123,39 @@ class Fraction():
                 'bbox': b
             })
 
+        bn = []
+        for b in self.bbox:
+            bx = b[0]
+            by = b[1] + self_offset
+            bn.append((bx, by))
+        self.bbox = bn
+
         bbox += [{
             'el': '\\frac{',
             'bbox': self.bbox
         }]
 
         return bbox
+
+    def find_denum_start(self, denum):
+        """
+        Find start off the denuminator.
+
+        Args:
+            denum: denum image
+
+        Returns:
+            int: y_offset
+        """
+        y_start = 0
+        denum = np.array(denum)
+
+        for i in range(len(denum)):
+            if any(np.equal(denum[i], [0, 0, 0, 255]).all(1)):
+                y_start += i
+                break
+
+        return y_start
 
     def insert_num_denum(self, numer_img, denum_img, numer_bb, denum_bb):
         """
@@ -144,22 +171,24 @@ class Fraction():
             Tuple (Image, list): Retursn completete fraction and bbox
         """
 
-        new_size = (self.fraction.width, numer_img.height + denum_img.height + self.fraction.height)
+        d_off = self.find_denum_start(denum_img) // 2
+
+        new_size = (self.fraction.width, numer_img.height + denum_img.height + self.fraction.height - d_off)
 
         cnt = Image.new('RGBA', new_size, color=(255, 255, 255, 0))
 
         numer_offset = [0, 0]
-        denum_offset = [0, numer_img.height + self.fraction.height]
+        denum_offset = [0, numer_img.height + self.fraction.height - d_off]
 
         if numer_img.width > denum_img.width:
             denum_offset[0] = (numer_img.width - denum_img.width) // 2
         else:
             numer_offset[0] = (denum_img.width - numer_img.width) // 2
 
+        cnt.paste(denum_img, denum_offset)
         cnt.paste(numer_img, numer_offset)
         cnt.paste(self.fraction, (0, numer_img.height))
-        cnt.paste(denum_img, denum_offset)
 
-        bbox = self.shift_formula(numer_bb, denum_bb, numer_offset, denum_offset)
+        bbox = self.shift_formula(numer_bb, denum_bb, numer_offset, denum_offset, numer_img.height)
 
         return cnt, bbox

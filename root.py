@@ -114,44 +114,64 @@ class Root():
 
         # put all together
         bbox = [
-            (x_start, y_start),
-            (x_end, y_start),
-            (x_end, y_end),
-            (x_start, y_end)
+            (x_start, y_start - self.offset_y//2),
+            (x_end, y_start - self.offset_y//2),
+            (x_end, y_end - self.offset_y//2),
+            (x_start, y_end - self.offset_y//2)
         ]
 
         return bbox
 
 
-    def shift_formula(self, bbox):
+    def shift_formula(self, bbox, root_off, ind):
         """
         Shifts all the elements that under the root, to their relative location.
 
         Args:
             bbox (list): list of bboxes for each element under the root
-            start (tuple): coordinates of the start index
+            image_size (tuple): coordinates of the start index
 
         Returns:
             list: bbox shifted for under root
         """
 
         x = 32-self.offset-15
-        y = self.offset_y+5
+        y = 10
 
         new_bb = []
 
         for bb in bbox:
             e = bb['el']
             b = []
-            for d in bb['bbox']:
-                new_x = d[0] + x
-                new_y = d[1] + y
-                b.append((new_x, new_y))
+            bbo = bb['bbox']
+            xmin, ymin = bbo[0]
+            xmax, ymax = bbo[2]
+            xmin += x
+            ymin += y
+            xmax += x
+            ymax += y
+
+            b.append((xmin, ymin))
+            b.append((xmax, ymin))
+            b.append((xmax, ymax))
+            b.append((xmin, ymax))
+            
+            # for d in bb['bbox']:
+            #     new_x = d[0] + x
+            #     new_y = d[1] + y
+            #     b.append((new_x, new_y))
 
             new_bb.append({
                 'el': e,
                 'bbox': b
             })
+
+        bn = []
+        for b in self.bbox:
+            bx = b[0]
+            by = b[1] + 5*ind - root_off
+            bn.append((bx, by))
+        self.bbox = bn
         
         # add roots bbox
         new_bb += [{
@@ -161,7 +181,7 @@ class Root():
 
         return new_bb
 
-    def insert_image(self, im, bbox):
+    def insert_image(self, im, bbox, ind):
         """
         Inserts formula under the root
         
@@ -175,14 +195,16 @@ class Root():
 
         # fit image under the root
         self.new_size = (im.width, self.root.height - self.offset_y - 5)
-        im = im.resize(self.new_size, Image.ANTIALIAS)
+        # im = im.resize(self.new_size, Image.ANTIALIAS)
         
         # concat root and formula under it
         max_h = max(im.height, self.root.height)
-        cnt = Image.new('RGBA', (self.root.width, max_h), color=(255, 255, 255, 0))
-        cnt.paste(self.root, (0, 0))
-        cnt.paste(im, (32-self.offset-15, self.offset_y+5), im)
+        cnt = Image.new('RGBA', (self.root.width, max_h+self.offset_y+10), color=(255, 255, 255, 0))
+        cnt.paste(self.root, (0, self.offset_y//2+5*ind - im.height//32))
+        cnt.paste(im, (32-self.offset-15, self.offset_y+10), im)
 
-        bbox = self.shift_formula(bbox)
+        bbox = self.shift_formula(bbox, im.height//32, ind)
+
+        cnt = cnt.crop((0, self.offset_y, cnt.width, cnt.height))
 
         return cnt, bbox
