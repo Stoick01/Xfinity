@@ -15,7 +15,12 @@ class Dataset():
         self.color = color
         self.train_size = size
         self.test_size = int(size * 0.2)
+
         self.path = path
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.mkdir(path)
+
         self.formulas = formulas
 
         self.image_creator = ImageCreator()
@@ -45,10 +50,11 @@ class Dataset():
             os.mkdir(loc)
 
             for i in range(self.train_size):
-                image, bbox = self.image_creator.generate(formula)
+                image, bbox = self.image_creator.generate(formula, background_color=self.color, dims=self.dims)
                 filename = str(i) + '.jpg'
 
                 image.save(os.path.join(loc, filename), 'JPEG')
+                print(f'Train {formula}, {i+1:>{len(str(self.train_size))}}/{self.train_size}')
 
 
             # create train images
@@ -56,7 +62,8 @@ class Dataset():
             os.mkdir(loc)
 
             for i in range(self.test_size):
-                image, bbox = self.image_creator.generate(formula)
+                image, bbox = self.image_creator.generate(formula, background_color=self.color, dims=self.dims)
                 filename = str(i) + '.jpg'
 
                 image.save(os.path.join(loc, filename), 'JPEG')
+                print(f'Test {formula}, {i+1:>{len(str(self.test_size))}}/{self.test_size}')

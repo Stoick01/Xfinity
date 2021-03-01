@@ -298,7 +298,7 @@ class ImageCreator():
 
         return image, parts
 
-    def generate(self, formula, background_color=None, padding=True):
+    def generate(self, formula, background_color=None, dims=None):
         """
         Generate image with background
 
@@ -313,14 +313,13 @@ class ImageCreator():
 
         image, bbox = self.create_image(formula)
 
-        if padding:
-            image, bbox = self.add_padding(image, bbox)
+        image, bbox = self.add_padding(image, bbox, dims)
 
         image = self.fill_background(image, background_color)
 
         return image, bbox
 
-    def add_padding(self, image, bbox):
+    def add_padding(self, image, bbox, dims=None):
         """
         Add random padding to all the sides of the image
 
@@ -332,10 +331,17 @@ class ImageCreator():
             Tuple (image, bbox): 
         """
 
-        offset_x = random.randint(0, 64)
-        offset_y = random.randint(0, 32)
+        max_x = 64
+        max_y = 32
 
-        new_image = Image.new('RGBA', (image.width + 64, image.height + 32), color=(255, 255, 255, 0))
+        if dims != None:
+            max_x = dims[0] - image.width
+            max_y = dims[1] - image.height
+
+        offset_x = random.randint(0, max_x)
+        offset_y = random.randint(0, max_y)
+
+        new_image = Image.new('RGBA', (image.width + max_x, image.height + max_y), color=(255, 255, 255, 0))
         new_image.paste(image, (offset_x, offset_y))
 
         bbox = self.move_bbox(bbox, x=offset_x, y=offset_y)

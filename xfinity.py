@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     idx = 1
 
-    dims = [None, None]
+    dims = None
     color = None
     size = 1
     formulas = []
@@ -63,8 +63,10 @@ if __name__ == '__main__':
             print('One of the arguments provided in --dims is not a number')
             exit()
 
-        dims[0] = int(d[0])
-        dims[1] = int(d[1])
+        dims = []
+
+        dims.append(int(d[0]))
+        dims.append(int(d[1]))
 
         idx += 1
 
