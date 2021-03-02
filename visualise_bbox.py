@@ -25,4 +25,3 @@ if __name__ == '__main__':
         im.rectangle([b[0], b[2]], outline=color)
 
     img.show()
-    img.save('images/ex3.jpg', 'JPEG')

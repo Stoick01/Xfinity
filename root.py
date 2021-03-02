@@ -199,7 +199,7 @@ class Root():
         
         # concat root and formula under it
         max_h = max(im.height, self.root.height)
-        cnt = Image.new('RGBA', (self.root.width, max_h+self.offset_y+10), color=(255, 255, 255, 0))
+        cnt = Image.new('RGBA', (self.root.width, max_h+self.offset_y+20), color=(255, 255, 255, 0))
         cnt.paste(self.root, (0, self.offset_y//2+5*ind - im.height//32))
         cnt.paste(im, (32-self.offset-15, self.offset_y+10), im)
 
